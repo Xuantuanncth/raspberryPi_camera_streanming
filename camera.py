@@ -46,8 +46,8 @@ class VideoCamera(object):
             file_path = path + f"{self.photo_string}_{today_date}{self.file_type}"
             print("File path: " + file_path)
         else:
-            file_path = f"./picture/{self.photo_string}_{today_date}{self.file_type}"
-        cv.imwrite(str(self.photo_string + "_" + today_date + self.file_type), frame)
+            file_path = f"./picture/stranger_people{self.file_type}"
+        cv.imwrite(file_path,frame)
 
     # Detect faces
     def detect_faces(self):

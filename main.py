@@ -33,7 +33,7 @@ def video_feed():
 # Take a photo when pressing camera button
 @app.route('/takePicture')
 def take_picture():
-    owner_pic_path = '/dataset/'+current_name + '/'
+    owner_pic_path = '/dataset/'+current_name+ '/'
     pi_camera.take_picture(owner_pic_path)
     return 'OK',200
 
@@ -118,9 +118,19 @@ def generate_frames(video_path):
 
 def read_config():
     print('[Info] reading config file')
+    Global current_name
+    Global email
+    Global start_time
+    Global end_time
     with open(configuration_path, 'r') as file:
         config = json.load(file)
-    print('[Info] config file: {}'.format(config))
+    
+    #Get global variables
+    current_name = config["name"]
+    email        = config["email"]
+    start_time   = config["time"]["start_time"]
+    end_time     = config["time"]["end_time"]
+    print('[Info] config file: ',current_name," ",email," ",start_time," ",end_time)
 
 def update_config_owner(owner, email):
     print('[Info] updating config owner')

@@ -129,7 +129,7 @@ def update_config_owner(owner, email):
         config = json.load(file)
     
     config['email'] = email
-    if(not_exists_name(owner))
+    if(not_exists_name(owner)):
         config['name'] = owner
         ret_val = True
 
@@ -145,7 +145,7 @@ def not_exists_name(new_name):
         # extract the person name from the image path
         print("[INFO] processing image {}/{}".format(i + 1,len(imagePaths)))
         name = imagePath.split(os.path.sep)[-2]
-        if name == new_name
+        if name == new_name:
             return False
     return True
 

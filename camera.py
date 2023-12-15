@@ -42,10 +42,11 @@ class VideoCamera(object):
         frame = self.flip_if_needed(self.vs.read())
         ret, image = cv.imencode(self.file_type, frame)
         today_date = datetime.now().strftime("%m%d%Y-%H%M%S") # get current time
-         if path:
+        if path:
             file_path = path + f"{self.photo_string}_{today_date}{self.file_type}"
+            print("File path: " + file_path)
         else:
-            file_path = f"{"./picture/"}{self.photo_string}_{today_date}{self.file_type}"
+            file_path = f"./picture/{self.photo_string}_{today_date}{self.file_type}"
         cv.imwrite(str(self.photo_string + "_" + today_date + self.file_type), frame)
 
     # Detect faces

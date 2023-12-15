@@ -38,7 +38,7 @@ class VideoCamera(object):
         return jpeg.tobytes()
 
     # Take a photo, called by camera button
-    def take_picture(self, path=None):
+    def take_picture(self, path):
         frame = self.flip_if_needed(self.vs.read())
         ret, image = cv.imencode(self.file_type, frame)
         today_date = datetime.now().strftime("%m%d%Y-%H%M%S") # get current time

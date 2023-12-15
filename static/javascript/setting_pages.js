@@ -18,6 +18,8 @@ function settingTime(){
 }
 
 function takePicture (){
+    let _video_display = document.getElementById('video_display');
+    _video_display.src = "./video_feed"
     let url = "/takePicture";
     fetch(url).then((response) => {
         response.json().then((data) => {
@@ -61,6 +63,8 @@ function settingOwner() {
 }
 
 function trainModel() {
+    let _video_display = document.getElementById('video_display');
+    _video_display.src = ""
     let url = "/trainModel";
     fetch(url).then((response) => {
         response.json().then((data) => {

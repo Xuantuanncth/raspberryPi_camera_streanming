@@ -33,7 +33,7 @@ def video_feed():
 # Take a photo when pressing camera button
 @app.route('/takePicture')
 def take_picture():
-    owner_pic_path = '/dataset/'+current_name+ '/'
+    owner_pic_path = './dataset/'+current_name+ '/'
     pi_camera.take_picture(owner_pic_path)
     return 'OK',200
 
@@ -66,6 +66,7 @@ def listVideo():
 @app.route('/trainModel')
 def trainModel():
     print('[INFO] App train model')
+    pi_camera.trainModel()
     return 'OK',200
 
 @app.route('/settingTimes', methods=['GET'])
@@ -118,10 +119,10 @@ def generate_frames(video_path):
 
 def read_config():
     print('[Info] reading config file')
-    Global current_name
-    Global email
-    Global start_time
-    Global end_time
+    global current_name
+    global email
+    global start_time
+    global end_time
     with open(configuration_path, 'r') as file:
         config = json.load(file)
     
@@ -186,5 +187,5 @@ def getListVideo():
 #         return "None"
 
 if __name__ == '__main__':
-
+    read_config()
     app.run(host='0.0.0.0', debug=False)

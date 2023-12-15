@@ -1,5 +1,6 @@
 from flask import Flask, render_template, Response, request, send_from_directory, jsonify
-# from camera import VideoCamera
+from camera import VideoCamera
+import cv2
 import os
 import json
 
@@ -81,7 +82,7 @@ def display_video():
     _video_name = request.args.get('video_name')
     _video = video_path + '/' + _video_name
     print('[INFO] display_video' , _video )
-    # return Response(generate_frames(_video), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(generate_frames(_video), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 # #============================= functions =============================#
@@ -95,16 +96,16 @@ def display_video():
 
 def generate_frames(video_path):
     print("[INFO] generate frame")
-    # video_capture = cv2.VideoCapture(video_path)
-    # while True:
-    #     success, frame = video_capture.read()
-    #     if not success:
-    #         break
-    #     else:
-    #         ret, buffer = cv2.imencode('.jpg', frame)
-    #         frame = buffer.tobytes()
-    #         yield (b'--frame\r\n'
-    #                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    video_capture = cv2.VideoCapture(video_path)
+    while True:
+        success, frame = video_capture.read()
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 def read_config():
     print('[Info] reading config file')

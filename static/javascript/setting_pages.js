@@ -64,14 +64,18 @@ function settingOwner() {
 
 function trainModel() {
     let _video_display = document.getElementById('video_display');
+    let _train_model = document.getElementById('train_model');
     _video_display.src = ""
+    _train_model.innerHTML = "Waiting..."
     let url = "/trainModel";
     fetch(url).then((response) => {
         response.json().then((data) => {
             if (data.error) {
                 console.log("Data error: ", data.error);
+                _train_model.innerHTML = "Error train"
             } else {
                 console.log(data);
+                _train_model.innerHTML = "Train model"
             }
         })
     })

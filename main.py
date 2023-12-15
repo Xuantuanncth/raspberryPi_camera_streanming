@@ -6,6 +6,7 @@ import pickle
 import cv2
 import os
 import json
+import multiprocessing
 import smtplib
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
@@ -102,6 +103,13 @@ def display_video():
     print('[INFO] display_video' , _video )
     return Response(generate_frames(_video), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/deleteVideo', methods=['GET'])
+def delete_video():
+    _video_name = request.args.get('video_name')
+    if (deleteVideo(_video_name)):
+        return jsonify({'status':'OK'}),200
+    else:
+        return jsonify({'status':'Error'}),400
 
 #============================= functions =============================#
 def gen(camera):
@@ -159,14 +167,12 @@ def update_config_owner(owner, email):
     
 
 def not_exists_name(new_name):
-    imagePaths = list(paths.list_images("dataset"))
-    for (i, imagePath) in enumerate(imagePaths):
-        # extract the person name from the image path
-        print("[INFO] processing image {}/{}".format(i + 1,len(imagePaths)))
-        name = imagePath.split(os.path.sep)[-2]
-        if name == new_name:
-            return False
-    return True
+    new_path = "./dataset/"+new_name
+    if not os.path.exists(new_path):
+        os.makedirs(new_path)
+        return True
+    else:
+        return False
 
 
 def update_config_time(start_time, end_time):
@@ -232,15 +238,16 @@ def trainModel():
     f.close()
     print("[INFO] ============> Finish train model <================")
 
-def sendMail(receive_mail): 
-    #Set the sender email and password and recipient email 
+def sendMail(): 
+    # Set the sender email and password and recipient email 
+    print("[INFO] ============> Send email <================")
     from_email_addr = "sendersmarthome@gmail.com"
     from_email_password = "xxke ueoq onjo uthl"
     # to_email_addr="xuantuanncth1@gmail.com"
     email_subject = "[WARNING!] Có người lạ mặt!"
     email_body = "Cảnh báo có người lạ mặt trong sân nhà bạn!"
-    if receive_mail != "":
-        to_email_addr = receive_mail
+    if email != "":
+        to_email_addr = email
     else:
         to_email_addr = "hieutran21042k@gmail.com"
     # create a multipart message
@@ -280,6 +287,21 @@ def face_detect(start_time, end_time):
         pi_camera.face_detect(start_time, end_time)
         return "None"
 
+def deleteVideo(video_name):
+    _video_path = video_path+"/"+video_name
+    if os.path.exists(_video_path):
+        os.remove(_video_path)
+        return True
+    else:
+        return False
+
+def statApplications():
+    app.run(host='0.0.0.0', port =5000, debug=True, threaded=True)
+
 if __name__ == '__main__':
     read_config()
-    app.run(host='0.0.0.0', debug=False)
+    statApplications()
+    # appProcess = multiprocessing.Process(target=statApplications)
+    # appProcess.start()
+
+    # appProcess.join()

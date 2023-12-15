@@ -5,7 +5,7 @@ from imutils import paths
 import face_recognition
 import pickle 
 import time
-from datetime import datetime, time
+from datetime import datetime
 import numpy as np
 
 #Determine faces from encodings.pickle file model created from train_model.py 
@@ -22,7 +22,6 @@ class VideoCamera(object):
         self.file_type = file_type # image type i.e. .jpg
         self.photo_string = photo_string # Name to save the photo
         self.is_streaming = True
-        self.video_file = video_file  # Video file to save
         self.out = None
         time.sleep(2.0)
 

@@ -1,28 +1,22 @@
-#Modified by smartbuilds.io
-#Date: 27.09.20
-#Desc: This web application serves a motion JPEG stream
-# main.py
-# import the necessary packages
-from flask import Flask, render_template, Response, request, send_from_directory
+from flask import Flask, render_template, Response, request, send_from_directory, jsonify
 from camera import VideoCamera
 import os
+import json
 
 pi_camera = VideoCamera(flip=False) # flip pi camera if upside down.
 
 # App Globals (do not edit)
 app = Flask(__name__)
 
+#============================= Global Variables =======================#
+configuration_path = os.path.join('./configuration.json')
+video_path = os.path.join('./video')
+image_path = os.path.join('./picture')
+
+#============================= App routes =============================#
 @app.route('/')
 def index():
-    return render_template('index.html') #you can customze index.html here
-
-def gen(camera):
-    #get camera frame
-    while True:
-        frame = camera.get_frame()
-        print('[Info] streaming video')
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+    return render_template('login.html') 
 
 @app.route('/video_feed')
 def video_feed():
@@ -34,6 +28,97 @@ def video_feed():
 def take_picture():
     pi_camera.take_picture()
     return "None"
+
+@app.route('/streaming')
+def streaming():
+    print('[INFO] App streaming')
+    return render_template('streaming.html')
+
+@app.route('/recording')
+def recording():
+    print('[INFO] App recording')
+    return render_template('recording.html')
+
+@app.route('/setting')
+def setting():
+    print('[INFO] App setting')
+    return render_template('setting.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    print('[INFO] App login')
+    return render_template('streaming.html')
+
+@app.route('/listVideo')
+def listVideo():
+    print('[INFO] App get listVideo')
+    _list_video = getListVideo()
+    return jsonify({'data': _list_video})
+
+@app.router('/trainModel')
+def trainModel():
+    print('[INFO] App train model')
+    return 'OK',200
+
+@app.route('/settingTime')
+def settingTime():
+    print('[INFO] setting time')
+    start_time = request.args.get('startTime')
+    stop_time  = request.args.get('stopTime')
+    update_config_time(start_time,stop_time)
+    return 'OK',200
+
+@app.route('settingOwner')
+def settingOwner():
+    print('[INFO] App Setting owner')
+    _user_name = request.args.get('name')
+    _email = request.args.get('email')
+    update_config_owner(_user_name,_email)
+    return 'OK',200
+
+
+#============================= functions =============================#
+def gen(camera):
+    #get camera frame
+    while True:
+        frame = camera.get_frame()
+        print('[Info] streaming video')
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+
+def read_config():
+    print('[Info] reading config file')
+    with open(configuration_file, 'r') as file:
+        config = json.load(file)
+    print('[Info] config file: {}'.format(config))
+
+def update_config_owner(owner, email):
+    print('[Info] updating config owner')
+    with open(configuration_file, 'r') as file:
+        config = json.load(file)
+    
+    config['email'] = email
+    config['name'] = owner
+
+    with open(configuration_file, 'w') as file:
+        json.dump(config,file,indent=2)
+
+def update_config_time(start_time, end_time):
+    print('[Info] updating config time')
+    with open(configuration_file, 'r') as file:
+        config = json.load(file)
+
+    config['time']['start_time'] = start_time
+    config['time']['end_time'] = end_time
+
+    with open(configuration_file,'w') as file:
+        json.dump(config,file,indent=2)
+
+def getListVideo():
+    print('[Info] get list video')
+    _list_video_path = os.listdir(_video_path)
+    print('List' + _list_video_path)
+    return _list
 
 def face_detect():
     while True:

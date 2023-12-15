@@ -1,0 +1,24 @@
+{
+  "email": "email@example.com",
+  "name": "Anonymous",
+  "picture": 5,
+  "train_model": "true",
+  "time": {
+    "start_time": "9:30 AM",
+    "end_time": "9:30 PM"
+  },
+  "account": {
+    "administrator": {
+      "email": "admin@example.com",
+      "password": "pass@123"
+    },
+    "guest1": {
+      "email": "guest1@example.com",
+      "password": "pass@123"
+    },
+    "guest2": {
+      "email": "guest2@example.com",
+      "password": "pass@123"
+    }
+  }
+}

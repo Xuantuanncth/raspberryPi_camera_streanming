@@ -20,7 +20,7 @@
             <button class="w-[169px] h-[42px] bg-zinc-400 rounded-lg hover:bg-orange-300 mt-[28px]" id="bt_setting">Setting</button>
         </div>
         <div class="w-[680px] h-[520px] relative bg-zinc-100 rounded-xl ml-[100px] mt-[80px]">
-            <img src="/video_feed" width="670px" height="500px" class="rounded-xl">
+            <img src="{{ url_for('video_feed') }}" width="670px" height="500px" class="rounded-xl">
         </div>
         <div class="w-[250px] text-center text-black text-base font-normal font-['Poppins'] pt-[80px] ml-[30px]">
             <input id="i_email" type="email" placeholder="Email" class="w-[200px] h-[42px] bg-zinc-300 bg-opacity-40 rounded-lg mb-[15px]">

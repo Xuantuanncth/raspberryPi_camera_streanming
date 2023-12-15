@@ -1,6 +1,6 @@
 from flask import Flask, render_template, Response, request, send_from_directory, jsonify
 from camera import VideoCamera
-import cv2
+# import cv2
 import os
 import json
 
@@ -96,16 +96,16 @@ def gen(camera):
 
 def generate_frames(video_path):
     print("[INFO] Streaming video")
-    video_capture = cv2.VideoCapture(video_path)
-    while True:
-        success, frame = video_capture.read()
-        if not success:
-            break
-        else:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+    # video_capture = cv2.VideoCapture(video_path)
+    # while True:
+    #     success, frame = video_capture.read()
+    #     if not success:
+    #         break
+    #     else:
+    #         ret, buffer = cv2.imencode('.jpg', frame)
+    #         frame = buffer.tobytes()
+    #         yield (b'--frame\r\n'
+    #                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 def read_config():
     print('[Info] reading config file')

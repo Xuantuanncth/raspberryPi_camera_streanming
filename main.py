@@ -14,6 +14,12 @@ configuration_path = os.path.join('./configuration.json')
 video_path = os.path.join('./video')
 image_path = os.path.join('./picture')
 
+email =""
+start_time = ""
+end_time = ""
+current_name = ""
+is_train_model = False
+
 #============================= App routes =============================#
 @app.route('/')
 def index():
@@ -25,10 +31,11 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # Take a photo when pressing camera button
-@app.route('/picture')
+@app.route('/takePicture')
 def take_picture():
-    pi_camera.take_picture()
-    return "None"
+    owner_pic_path = '/dataset/'+current_name + '/'
+    pi_camera.take_picture(owner_pic_path)
+    return 'OK',200
 
 @app.route('/streaming')
 def streaming():
@@ -74,8 +81,10 @@ def settingOwner():
     print('[INFO] App Setting owner')
     _user_name = request.args.get('name')
     _email = request.args.get('email')
-    update_config_owner(_user_name,_email)
-    return 'OK',200
+    if(update_config_owner(_user_name,_email)):
+        return 'OK',200
+    else:
+        return 'Owner exists',404
 
 @app.route('/display_video', methods=['GET'])
 def display_video():
@@ -115,14 +124,31 @@ def read_config():
 
 def update_config_owner(owner, email):
     print('[Info] updating config owner')
+    ret_val = False
     with open(configuration_path, 'r') as file:
         config = json.load(file)
     
     config['email'] = email
-    config['name'] = owner
+    if(not_exists_name(owner))
+        config['name'] = owner
+        ret_val = True
 
     with open(configuration_path, 'w') as file:
         json.dump(config,file,indent=2)
+    
+    return ret_val
+    
+
+def not_exists_name(new_name):
+    imagePaths = list(paths.list_images("dataset"))
+    for (i, imagePath) in enumerate(imagePaths):
+        # extract the person name from the image path
+        print("[INFO] processing image {}/{}".format(i + 1,len(imagePaths)))
+        name = imagePath.split(os.path.sep)[-2]
+        if name == new_name
+            return False
+    return True
+
 
 def update_config_time(start_time, end_time):
     print('[Info] updating config time')
@@ -134,6 +160,9 @@ def update_config_time(start_time, end_time):
 
     with open(configuration_path,'w') as file:
         json.dump(config,file,indent=2)
+
+def save_video():
+    print('[Info] Saving video')
 
 def getListVideo():
     print('[Info] get list video')

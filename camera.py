@@ -38,10 +38,14 @@ class VideoCamera(object):
         return jpeg.tobytes()
 
     # Take a photo, called by camera button
-    def take_picture(self):
+    def take_picture(self, path=None):
         frame = self.flip_if_needed(self.vs.read())
         ret, image = cv.imencode(self.file_type, frame)
         today_date = datetime.now().strftime("%m%d%Y-%H%M%S") # get current time
+         if path:
+            file_path = path + f"{self.photo_string}_{today_date}{self.file_type}"
+        else:
+            file_path = f"{"./picture/"}{self.photo_string}_{today_date}{self.file_type}"
         cv.imwrite(str(self.photo_string + "_" + today_date + self.file_type), frame)
 
     # Detect faces

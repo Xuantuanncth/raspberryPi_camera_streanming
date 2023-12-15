@@ -88,14 +88,14 @@ def display_video():
 #============================= functions =============================#
 def gen(camera):
     #get camera frame
+    print("[INFO] Streaming camera")
     while True:
         frame = camera.get_frame()
-        print('[Info] streaming video')
         yield (b'-- \r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
 def generate_frames(video_path):
-    print("[INFO] generate frame")
+    print("[INFO] Streaming video")
     video_capture = cv2.VideoCapture(video_path)
     while True:
         success, frame = video_capture.read()

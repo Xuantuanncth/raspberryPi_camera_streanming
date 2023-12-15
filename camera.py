@@ -5,7 +5,7 @@ from imutils import paths
 import face_recognition
 import pickle 
 import time
-from datetime import datetime
+from datetime import datetime, time
 import numpy as np
 
 #Determine faces from encodings.pickle file model created from train_model.py 
@@ -15,13 +15,15 @@ print("[INFO] loading encodings + face detector...")
 data_model = pickle.loads(open(encodingsP, "rb").read()) 
 
 class VideoCamera(object):
-    def __init__(self, flip = False, file_type  = ".jpg", photo_string= "stream_photo"):
+    def __init__(self, flip = False, file_type  = ".jpg", photo_string= "stream_photo", video_type=".mp4"):
         # self.vs = PiVideoStream(resolution=(1920, 1080), framerate=30).start()
         self.vs = PiVideoStream().start()
         self.flip = flip # Flip frame vertically
         self.file_type = file_type # image type i.e. .jpg
         self.photo_string = photo_string # Name to save the photo
         self.is_streaming = True
+        self.video_file = video_file  # Video file to save
+        self.out = None
         time.sleep(2.0)
 
     def __del__(self):
@@ -50,8 +52,27 @@ class VideoCamera(object):
             file_path = f"./picture/stranger_people{self.file_type}"
         cv.imwrite(file_path,frame)
 
+    def check_time(self, start_time, end_time):
+        _start_time = datetime.strptime(start_time, "%H:%M").time()
+        _end_time = datetime.strptime(end_time, "%H:%M").time()
+        current_time = datetime.now().time()
+        if start_time < current_time < end_time:
+            return True
+        else:
+            return False
+
+    def start_recording(self):
+        today_date = datetime.now().strftime("%m%d%Y") # get current time
+        video_path = f"./video/{today_date}{self.file_type}"
+        fourcc = cv2.VideoWriter_fourcc(*'MP4V')  # You can change the codec as needed
+        self.out = cv2.VideoWriter(video_path, fourcc, 20.0, (640, 480))  # Adjust parameters accordingly
+    
+    def stop_recording(self):
+        if self.out:
+            self.out.release()
+
     # Detect faces
-    def detect_faces(self):
+    def detect_faces(self, start_time, end_time):
         frame = self.flip_if_needed(self.vs.read())
         # Detect the fce boxes 
         boxes = face_recognition.face_locations(frame)
@@ -70,3 +91,10 @@ class VideoCamera(object):
             else:
                 take_picture()
                 print("Nguoi la xuat hien")
+        if (check_time(start_time,end_time)):
+            # Record video while face is detected
+            if not self.out:
+                self.start_recording()
+
+            # Write the frame to the video file
+            self.out.write(frame)

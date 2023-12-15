@@ -1,10 +1,16 @@
 from flask import Flask, render_template, Response, request, send_from_directory, jsonify
 from camera import VideoCamera
+from imutils import paths
 import face_recognition
 import pickle 
 import cv2
 import os
 import json
+import smtplib
+from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 
 pi_camera = VideoCamera(flip=False) # flip pi camera if upside down.
 
@@ -69,7 +75,7 @@ def listVideo():
 def trainModel():
     print('[INFO] App train model')
     trainModel()
-    return 'OK',200
+    return jsonify({'status':'OK'}),200
 
 @app.route('/settingTimes', methods=['GET'])
 def settingTimes():
@@ -226,10 +232,53 @@ def trainModel():
     f.close()
     print("[INFO] ============> Finish train model <================")
 
-# def face_detect():
-#     while True:
-#         pi_camera.face_detect()
-#         return "None"
+def sendMail(receive_mail): 
+    #Set the sender email and password and recipient email 
+    from_email_addr = "sendersmarthome@gmail.com"
+    from_email_password = "xxke ueoq onjo uthl"
+    # to_email_addr="xuantuanncth1@gmail.com"
+    email_subject = "[WARNING!] Có người lạ mặt!"
+    email_body = "Cảnh báo có người lạ mặt trong sân nhà bạn!"
+    if receive_mail != "":
+        to_email_addr = receive_mail
+    else:
+        to_email_addr = "hieutran21042k@gmail.com"
+    # create a multipart message
+    msg = MIMEMultipart()
+    
+    # set the email body
+    msg.attach(MIMEText(email_body, 'plain'))
+    
+    # set sender and recipient
+    msg['From'] = from_email_addr
+    msg['To'] = to_email_addr
+    
+    # set your email subject
+    msg['Subject'] = email_subject
+    
+    # attach the image
+    with open(strange_images, 'rb') as image_file:
+        image_data = image_file.read()
+        image = MIMEImage(image_data, name="stranger_people.jpg")
+        msg.attach(image)
+    
+    # connect to server and send email
+    # edit this line with your provider's SMTP server details
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    
+    # comment out this line if your provider doesn't use TLS
+    server.starttls()
+    
+    server.login(from_email_addr, from_email_password)
+    server.send_message(msg)
+    server.quit()
+    
+    print('Email sent')
+
+def face_detect(start_time, end_time):
+    while True:
+        pi_camera.face_detect(start_time, end_time)
+        return "None"
 
 if __name__ == '__main__':
     read_config()

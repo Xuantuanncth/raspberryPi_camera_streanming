@@ -1,4 +1,4 @@
-const linkVideo = "/video/"
+const linkVideo = "/display_video?video_name="
 const linkStream = "http://localhost:8000"
 
 window.onload = function loadData() {
@@ -18,7 +18,7 @@ window.onload = function loadData() {
 function createListVideo(data) {
     console.log("[createListVideo]");
     const listVideo = document.getElementById("list-video");
-    data.forEach(element => {
+    data.data.forEach(element => {
         console.log("Element: ", element);
         let div = createTagVideo(element);
         listVideo.appendChild(div);

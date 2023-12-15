@@ -4,7 +4,7 @@ function settingTime(){
     if(startTime.value ==="" || stopTime.value ===""){
         alert("Please select time to start and time to stop");
     } else {
-        let url = "/settingTimes/startTime="+startTime.value+"&stopTime="+stopTime.value;
+        let url = "/settingTimes?startTime="+startTime.value+"&stopTime="+stopTime.value;
         fetch(url).then((response) => {
             response.json().then((data) => {
                 if (data.error) {
@@ -39,7 +39,7 @@ function settingOwner() {
         alert("Please enter a valid email address and name.");
     } else {
 
-        let url = "/settingOwner/name="+_name.value+"&email="+_email.value;
+        let url = "/settingOwner?name="+_name.value+"&email="+_email.value;
         fetch(url,{
             method: 'GET',
             headers: {

@@ -4,7 +4,7 @@ import cv2
 import os
 import json
 
-# pi_camera = VideoCamera(flip=False) # flip pi camera if upside down.
+pi_camera = VideoCamera(flip=False) # flip pi camera if upside down.
 
 # App Globals (do not edit)
 app = Flask(__name__)
@@ -19,10 +19,10 @@ image_path = os.path.join('./picture')
 def index():
     return render_template('index.html') 
 
-# @app.route('/video_feed')
-# def video_feed():
-#     return Response(gen(pi_camera),
-#                     mimetype='multipart/x-mixed-replace; boundary=frame')
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen(pi_camera),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # Take a photo when pressing camera button
 @app.route('/picture')
@@ -85,14 +85,14 @@ def display_video():
     return Response(generate_frames(_video), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-# #============================= functions =============================#
-# def gen(camera):
-#     #get camera frame
-#     while True:
-#         frame = camera.get_frame()
-#         print('[Info] streaming video')
-#         yield (b'-- \r\n'
-#                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+#============================= functions =============================#
+def gen(camera):
+    #get camera frame
+    while True:
+        frame = camera.get_frame()
+        print('[Info] streaming video')
+        yield (b'-- \r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
 def generate_frames(video_path):
     print("[INFO] generate frame")

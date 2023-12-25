@@ -61,14 +61,16 @@ class VideoCamera(object):
             return False
 
     def start_recording(self):
-        today_date = datetime.now().strftime("%m%d%Y") # get current time
-        video_path = f"./video/{today_date}{self.file_type}"
-        fourcc = cv2.VideoWriter_fourcc(*'MP4V')  # You can change the codec as needed
-        self.out = cv2.VideoWriter(video_path, fourcc, 20.0, (640, 480))  # Adjust parameters accordingly
+        print("Starting recording")
+        # today_date = datetime.now().strftime("%m%d%Y") # get current time
+        # video_path = f"./video/{today_date}{self.file_type}"
+        # fourcc = cv2.VideoWriter_fourcc(*'MP4V')  # You can change the codec as needed
+        # self.out = cv2.VideoWriter(video_path, fourcc, 20.0, (640, 480))  # Adjust parameters accordingly
     
     def stop_recording(self):
-        if self.out:
-            self.out.release()
+        print("Stop recording")
+        # if self.out:
+        #     self.out.release()
 
     # Detect faces
     def detect_faces(self, start_time, end_time):

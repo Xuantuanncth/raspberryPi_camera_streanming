@@ -17,12 +17,14 @@ This is project using raspberry pi and python flask and camera pi
  - Install Imutils
    ```
    pip install imutils
-  ```
+   ```
+
 3. Run
   ```
   cd camera_stream/raspberryPi_camera_streanming
   python main.py
   ```
+
 4. Feature
 
 

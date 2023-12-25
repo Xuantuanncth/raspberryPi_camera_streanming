@@ -6,7 +6,7 @@ This is project using raspberry pi and python flask and camera pi
      cd pi
      mkdir camera_stream
      cd camera_stream
-     git clone ""
+     git clone "https://github.com/Xuantuanncth/raspberryPi_camera_streanming.git"
    ```
 2. Setup enviroiment
  - Install python

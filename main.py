@@ -12,6 +12,7 @@ from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+import shutil
 
 pi_camera = VideoCamera(flip=False) # flip pi camera if upside down.
 
@@ -111,6 +112,11 @@ def delete_video():
     else:
         return jsonify({'status':'Error'}),400
 
+@app.route('/getFreeDisk', methods=['GET'])
+def get_free_disk():
+    _free_disk = get_free_space()
+    return jsonify({'data': _free_disk})
+
 #============================= functions =============================#
 def gen(camera):
     #get camera frame
@@ -185,6 +191,29 @@ def update_config_time(start_time, end_time):
 
     with open(configuration_path,'w') as file:
         json.dump(config,file,indent=2)
+
+# Get free disk
+def get_free_space(path="/"):
+    # Get disk usage statistics
+    usage = shutil.disk_usage(path)
+
+    total_space = usage.total  # Total disk space in bytes
+    free_space = usage.free    # Free disk space in bytes
+    used_space = usage.used    # Used disk space in bytes
+
+    # Convert bytes to human-readable sizes (optional)
+    total_space_gb = total_space / (2**30)  # Convert bytes to gigabytes
+    free_space_gb = free_space / (2**30)
+    used_space_gb = used_space / (2**30)
+
+    return {
+        "total_space": total_space,
+        "free_space": free_space,
+        "used_space": used_space,
+        "total_space_gb": total_space_gb,
+        "free_space_gb": free_space_gb,
+        "used_space_gb": used_space_gb
+    }
 
 def save_video():
     print('[Info] Saving video')
@@ -283,9 +312,13 @@ def sendMail():
     print('Email sent')
 
 def face_detect(start_time, end_time):
+    print("Start face_detect")
     while True:
         pi_camera.face_detect(start_time, end_time)
-        return "None"
+        if pi_camera.check_sendMail() :
+            sendMail()
+            pi_camera.clear_flag_mail()
+
 
 def deleteVideo(video_name):
     _video_path = video_path+"/"+video_name
@@ -300,7 +333,8 @@ def statApplications():
 
 if __name__ == '__main__':
     read_config()
-    statApplications()
+    face_detect(start_time,end_time)
+    # statApplications()
     # appProcess = multiprocessing.Process(target=statApplications)
     # appProcess.start()
 

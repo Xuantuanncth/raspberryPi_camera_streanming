@@ -91,7 +91,7 @@ class VideoCamera(object):
     # Detect faces
     def face_detect(self, start_time, end_time):
         frame = self.flip_if_needed(self.vs.read())
-        if (self.check_time("14:53","14:54")):
+        if (self.check_time(start_time,end_time)):
             # Record video while face is detected
             if not self.out:
                 self.start_recording()

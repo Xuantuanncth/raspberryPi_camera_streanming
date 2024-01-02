@@ -6,7 +6,7 @@ import pickle
 import cv2
 import os
 import json
-import multiprocessing
+# import multiprocessing
 import smtplib
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
@@ -333,8 +333,9 @@ def statApplications():
 
 if __name__ == '__main__':
     read_config()
-    face_detect(start_time,end_time)
+    # face_detect(start_time,end_time)
     # statApplications()
+    app.run(host='0.0.0.0', port =5000, debug=False, threaded=True)
     # appProcess = multiprocessing.Process(target=statApplications)
     # appProcess.start()
 

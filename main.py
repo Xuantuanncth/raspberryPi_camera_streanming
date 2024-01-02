@@ -28,6 +28,8 @@ start_time = ""
 end_time = ""
 current_name = ""
 is_train_model = False
+is_send_mail = False
+is_streaming = False
 
 #============================= App routes =============================#
 @app.route('/')
@@ -48,6 +50,8 @@ def take_picture():
 
 @app.route('/streaming')
 def streaming():
+    global is_streaming
+    is_streaming = True
     print('[INFO] App streaming')
     return render_template('streaming.html')
 
@@ -284,7 +288,11 @@ def sendMail():
 
 def face_detect(start_time, end_time):
     while True:
-        pi_camera.face_detect(start_time, end_time)
+        if is_streaming:
+            pi_camera.detect_faces(start_time, end_time)
+        if is_sendEmails()
+            sendMail()
+            clear_flag_sendMails()
         return "None"
 
 def deleteVideo(video_name):
@@ -298,10 +306,15 @@ def deleteVideo(video_name):
 def statApplications():
     app.run(host='0.0.0.0', port =5000, debug=True, threaded=True)
 
+def startFaceDetection():
+    face_detect(start_time,end_time)
+
 if __name__ == '__main__':
     read_config()
-    statApplications()
-    # appProcess = multiprocessing.Process(target=statApplications)
-    # appProcess.start()
+    # statApplications()
+    appProcess = multiprocessing.Process(target=statApplications)
+    appProcess.start()
 
+    faceProcess = multiprocessing.Process(target=startFaceDetection)
+    faceProcess.start() 
     # appProcess.join()

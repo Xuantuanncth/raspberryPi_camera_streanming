@@ -22,6 +22,8 @@ class VideoCamera(object):
         self.file_type = file_type # image type i.e. .jpg
         self.photo_string = photo_string # Name to save the photo
         self.is_streaming = True
+        self.is_recoding = False
+        self.send_message_counters = 0
         self.out = None
         time.sleep(2.0)
 
@@ -55,13 +57,14 @@ class VideoCamera(object):
         _start_time = datetime.strptime(start_time, "%H:%M").time()
         _end_time = datetime.strptime(end_time, "%H:%M").time()
         current_time = datetime.now().time()
-        if start_time < current_time < end_time:
+        if _start_time < current_time < _end_time:
             return True
         else:
             return False
 
     def start_recording(self):
         print("Starting recording")
+        is_recoding = True
         # today_date = datetime.now().strftime("%m%d%Y") # get current time
         # video_path = f"./video/{today_date}{self.file_type}"
         # fourcc = cv2.VideoWriter_fourcc(*'MP4V')  # You can change the codec as needed
@@ -71,6 +74,14 @@ class VideoCamera(object):
         print("Stop recording")
         # if self.out:
         #     self.out.release()
+
+    def is_sendEmails(self):
+        if (self.send_message_counters > 5)
+            return True
+        else:
+            return False
+    def clear_flag_sendMails(self):
+        self.send_message_counters = 0
 
     # Detect faces
     def detect_faces(self, start_time, end_time):
@@ -91,6 +102,7 @@ class VideoCamera(object):
                 print("Có nguoi quen")
             else:
                 take_picture()
+                self.send_message_counters += 1
                 print("Nguoi la xuat hien")
         if (check_time(start_time,end_time)):
             # Record video while face is detected
@@ -99,3 +111,7 @@ class VideoCamera(object):
 
             # Write the frame to the video file
             self.out.write(frame)
+        else:
+            if is_recoding
+                stop_recording()
+                is_recoding = False

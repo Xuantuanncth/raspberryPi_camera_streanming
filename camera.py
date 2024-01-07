@@ -22,7 +22,6 @@ class VideoCamera(object):
         self.file_type = file_type # image type i.e. .jpg
         self.video_type = video_type
         self.photo_string = photo_string # Name to save the photo
-        self.is_streaming = True
         self.mail_counter = 0
         self.isSendEmail = False
         self.out = None
@@ -65,7 +64,7 @@ class VideoCamera(object):
 
     def start_recording(self):
         print("[INFO] Starting recording")
-        today_date = datetime.now().strftime("%m%d%Y") # get current time
+        today_date = datetime.now().strftime("%H_%M_%d%m%Y") # get current time
         video_path = f"./video/{today_date}{self.video_type}"
         print("[INFO] Video path: ", video_path)
         fourcc = cv.VideoWriter_fourcc(*'XVID')  # You can change the codec as needed

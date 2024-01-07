@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, request, send_from_directory, jsonify
+from flask import Flask, render_template, Response, request, send_from_directory, jsonify, session, redirect,url_for
 from camera import VideoCamera
 from imutils import paths
 import face_recognition
@@ -7,6 +7,7 @@ import cv2
 import os
 import json
 # import multiprocessing
+import threading
 import smtplib
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
@@ -18,6 +19,7 @@ pi_camera = VideoCamera(flip=False) # flip pi camera if upside down.
 
 # App Globals (do not edit)
 app = Flask(__name__)
+app.secret_key = '8d43ce30-9052-42a7-9e9d-847c53be299e'
 
 #============================= Global Variables =======================#
 configuration_path = os.path.join('./configuration.json')
@@ -28,7 +30,11 @@ email =""
 start_time = ""
 end_time = ""
 current_name = ""
+admin_name = ""
+admin_pass = ""
 is_train_model = False
+is_streaming = True
+is_updateConfig = False
 
 #============================= App routes =============================#
 @app.route('/')
@@ -37,8 +43,17 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
+    global is_streaming
+    is_streaming = False
     return Response(gen(pi_camera),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# Call stop_streaming to make sure that streaming stop
+@app.route('/stopStreaming')
+def stop_streaming():
+    global is_streaming
+    is_streaming = True
+    return 'OK',200
 
 # Take a photo when pressing camera button
 @app.route('/takePicture')
@@ -50,22 +65,47 @@ def take_picture():
 @app.route('/streaming')
 def streaming():
     print('[INFO] App streaming')
-    return render_template('streaming.html')
+    if session.get('logged_in'):
+        return render_template('streaming.html')
+    else:
+        return render_template('index.html')
 
 @app.route('/recording')
 def recording():
     print('[INFO] App recording')
-    return render_template('recording.html')
+    if session.get('logged_in'):
+        return render_template('recording.html')
+    else:
+        return render_template('index.html')
 
 @app.route('/setting')
 def setting():
     print('[INFO] App setting')
-    return render_template('setting.html')
+    if session.get('logged_in'):
+        return render_template('setting.html')
+    else:
+        return render_template('index.html')
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    print('[INFO] App login')
-    return render_template('streaming.html')
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Kiểm tra thông tin đăng nhập (đây chỉ là ví dụ, không nên sử dụng trong thực tế)
+        if username == admin_name and password == admin_pass:
+            session['logged_in'] = True
+            session['username'] = username
+            return redirect(url_for('streaming'))
+        else:
+            return render_template('index.html', error='Invalid username or password')
+
+    return render_template('index.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/listVideo')
 def listVideo():
@@ -82,9 +122,11 @@ def trainModel():
 @app.route('/settingTimes', methods=['GET'])
 def settingTimes():
     print('[INFO] setting time')
+    global is_updateConfig
     start_time = request.args.get('startTime')
     stop_time  = request.args.get('stopTime')
     update_config_time(start_time,stop_time)
+    is_updateConfig = True
     return 'OK',200
 
 @app.route('/settingOwner', methods=['GET'])
@@ -120,11 +162,13 @@ def get_free_disk():
 #============================= functions =============================#
 def gen(camera):
     #get camera frame
-    print("[INFO] Streaming camera")
+    print("[INFO] Start streaming camera")
     while True:
         frame = camera.get_frame()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+    #End while
+    print("[INFO] Stop streaming camera")
 
 def generate_frames(video_path):
     print("[INFO] Streaming video")
@@ -145,6 +189,8 @@ def read_config():
     global email
     global start_time
     global end_time
+    global admin_name
+    global admin_pass
     with open(configuration_path, 'r') as file:
         config = json.load(file)
     
@@ -153,6 +199,8 @@ def read_config():
     email        = config["email"]
     start_time   = config["time"]["start_time"]
     end_time     = config["time"]["end_time"]
+    admin_name     = config["account"]["administrator"]["email"]
+    admin_pass     = config["account"]["administrator"]["password"]
     print('[Info] config file: ',current_name," ",email," ",start_time," ",end_time)
 
 def update_config_owner(owner, email):
@@ -221,7 +269,7 @@ def save_video():
 def getListVideo():
     print('[Info] get list video')
     _list_video_path = os.listdir(video_path)
-    print('List', _list_video_path)
+    # print('List', _list_video_path)
     return _list_video_path
 
 def trainModel():
@@ -310,15 +358,21 @@ def sendMail():
     server.quit()
     
     print('Email sent')
-
-def face_detect(start_time, end_time):
+# face_detect(is_streaming,is_updateConfig,start_time,end_time)
+def face_detect():
     print("Start face_detect")
+    global is_updateConfig
     while True:
-        pi_camera.face_detect(start_time, end_time)
+        if is_streaming:
+            pi_camera.face_detect(start_time, end_time)
+
         if pi_camera.check_sendMail() :
             sendMail()
             pi_camera.clear_flag_mail()
-
+        if is_updateConfig:
+            print("[INFO] Face_detet(): is_updateConfig = True")
+            read_config()
+            is_updateConfig = False
 
 def deleteVideo(video_name):
     _video_path = video_path+"/"+video_name
@@ -329,14 +383,27 @@ def deleteVideo(video_name):
         return False
 
 def statApplications():
-    app.run(host='0.0.0.0', port =5000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port =5000, debug=False)
 
 if __name__ == '__main__':
     read_config()
     # face_detect(start_time,end_time)
     # statApplications()
-    app.run(host='0.0.0.0', port =5000, debug=False, threaded=True)
+    # app.run(host='0.0.0.0', port =5000, debug=False, threaded=True)
     # appProcess = multiprocessing.Process(target=statApplications)
     # appProcess.start()
 
+    # faceProcess = multiprocessing.Process(target=face_detect)
+    # faceProcess.start()
+
     # appProcess.join()
+    # faceProcess.join()
+    appThread = threading.Thread(target=statApplications)
+    faceThread = threading.Thread(target=face_detect)
+
+    appThread.start()
+    faceThread.start()
+
+    appThread.join()
+    faceThread.join()
+

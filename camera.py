@@ -43,10 +43,11 @@ class VideoCamera(object):
 
     # Take a photo, called by camera button
     def take_picture(self, path):
+        print("[INFO] Take a picture")
         frame = self.flip_if_needed(self.vs.read())
         ret, image = cv.imencode(self.file_type, frame)
         today_date = datetime.now().strftime("%m%d%Y-%H%M%S") # get current time
-        if path:
+        if path != "":
             file_path = path + f"{self.photo_string}_{today_date}{self.file_type}"
             print("File path: " + file_path)
         else:
@@ -115,6 +116,6 @@ class VideoCamera(object):
             if True in matches:
                 print("Có nguoi quen")
             else:
-                take_picture()
+                self.take_picture("")
                 self.mail_counter += 1
                 print("Nguoi la xuat hien")

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, request, send_from_directory, jsonify, session, redirect,url_for
+from flask import Flask, render_template, Response, request, send_from_directory, jsonify, session, redirect,url_for, current_app, send_file
 from camera import VideoCamera
 from imutils import paths
 import face_recognition
@@ -6,6 +6,7 @@ import pickle
 import cv2
 import os
 import json
+import re
 # import multiprocessing
 import threading
 import smtplib
@@ -14,12 +15,14 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 import shutil
+from datetime import timedelta
 
 pi_camera = VideoCamera(flip=False) # flip pi camera if upside down.
 
 # App Globals (do not edit)
 app = Flask(__name__)
 app.secret_key = '8d43ce30-9052-42a7-9e9d-847c53be299e'
+app.permanent_session_lifetime = timedelta(minutes=5)
 
 #============================= Global Variables =======================#
 configuration_path = os.path.join('./configuration.json')
@@ -32,6 +35,7 @@ end_time = ""
 current_name = ""
 admin_name = ""
 admin_pass = ""
+MAX_ATTEMPTS = 3
 is_train_model = False
 is_streaming = True
 is_updateConfig = False
@@ -53,14 +57,14 @@ def video_feed():
 def stop_streaming():
     global is_streaming
     is_streaming = True
-    return 'OK',200
+    return jsonify({'status':'OK'}),200
 
 # Take a photo when pressing camera button
 @app.route('/takePicture')
 def take_picture():
     owner_pic_path = './dataset/'+current_name+ '/'
     pi_camera.take_picture(owner_pic_path)
-    return 'OK',200
+    return jsonify({'status':'OK'}),200
 
 @app.route('/streaming')
 def streaming():
@@ -94,11 +98,18 @@ def login():
 
         # Kiểm tra thông tin đăng nhập (đây chỉ là ví dụ, không nên sử dụng trong thực tế)
         if username == admin_name and password == admin_pass:
+            session.permanent = True
             session['logged_in'] = True
             session['username'] = username
+            session['failed_attempts'] = 0
             return redirect(url_for('streaming'))
         else:
-            return render_template('index.html', error='Invalid username or password')
+            attempts = session.get('failed_attempts', 0) + 1
+            session['failed_attempts'] = attempts
+            if attempts >= MAX_ATTEMPTS:
+                return render_template('index.html', error='Too many failed login attempts, please try after 5m',disable='true')
+            else:
+                return render_template('index.html', error=f'Invalid username or password, login fail {attempts}')
 
     return render_template('index.html')
 
@@ -145,6 +156,39 @@ def display_video():
     _video = video_path + '/' + _video_name
     print('[INFO] display_video' , _video )
     return Response(generate_frames(_video), mimetype='multipart/x-mixed-replace; boundary=frame')
+#========================================================================================#
+@app.route("/stream_video_1", methods=["GET"])
+def video():
+    _video_name = request.args.get('video_name')
+    headers = request.headers
+    if not "range" in headers:
+        return current_app.response_class(status=400)
+
+    _video_dir = os.path.abspath(os.path.join("./video", _video_name))
+    size = os.stat(_video_dir)
+    size = size.st_size
+
+    chunk_size = (10 ** 6) * 3 #1000kb makes 1mb * 3 = 3mb (this is based on your choice)
+    start = int(re.sub("\D", "", headers["range"]))
+    end = min(start + chunk_size, size - 1)
+
+    content_length = end - start + 1
+
+    def get_chunk(video_dir, start, chunk_size):
+        with open(video_dir, "rb") as f:
+            f.seek(start)
+            chunk = f.read(chunk_size)
+        return chunk
+
+    content_range = "bytes " + str(start) + "-" + str(end) + "/" + str(size)
+    headers = {
+        "Content-Range": content_range,
+        "Accept-Ranges": "bytes",
+        "Content-Length": content_length,
+        "Content-Type": "video/x-msvideo",
+    }
+
+    return current_app.response_class(get_chunk(_video_dir, start,chunk_size), 206, headers)
 
 @app.route('/deleteVideo', methods=['GET'])
 def delete_video():
@@ -158,6 +202,39 @@ def delete_video():
 def get_free_disk():
     _free_disk = get_free_space()
     return jsonify({'data': _free_disk})
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Accept-Ranges', 'bytes')
+    return response
+
+@app.route('/stream_video', methods=['GET'])
+def get_file():
+    _video_name = request.args.get('video_name')
+    _video_dir = os.path.abspath(os.path.join("./video", _video_name))
+    range_header = request.headers.get('Range', None)
+    byte1, byte2 = 0, None
+    if range_header:
+        match = re.search(r'(\d+)-(\d*)', range_header)
+        groups = match.groups()
+
+        if groups[0]:
+            byte1 = int(groups[0])
+        if groups[1]:
+            byte2 = int(groups[1])
+       
+    chunk, start, length, file_size = get_chunk(byte1, byte2, _video_dir)
+    resp = Response(chunk, 206, mimetype='video/mp4',
+                      content_type='video/mp4', direct_passthrough=True)
+    resp.headers.add('Content-Range', 'bytes {0}-{1}/{2}'.format(start, start + length - 1, file_size))
+    return resp
+
+@app.route('/get_video_file', methods=['GET'])
+def get_video_file():
+    _video_name = request.args.get('video_name')
+    _video_dir = os.path.abspath(os.path.join("./video", _video_name))
+    mime_type = 'video/mp4'
+    return send_file(_video_dir, mimetype=mime_type)
 
 #============================= functions =============================#
 def gen(camera):
@@ -182,6 +259,23 @@ def generate_frames(video_path):
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+def get_chunk(byte1=None, byte2=None, video_dir=None):
+    file_size = os.stat(video_dir).st_size
+    start = 0
+    
+    if byte1 < file_size:
+        start = byte1
+    if byte2:
+        length = byte2 + 1 - byte1
+    else:
+        length = file_size - start
+
+    with open(video_dir, 'rb') as f:
+        f.seek(start)
+        chunk = f.read(length)
+    return chunk, start, length, file_size
+
 
 def read_config():
     print('[Info] reading config file')
@@ -316,7 +410,8 @@ def trainModel():
     print("[INFO] ============> Finish train model <================")
 
 def sendMail(): 
-    # Set the sender email and password and recipient email 
+    # Set the sender email and password and recipient email
+    strange_images = "/home/pi/camera_detect/raspberryPi_camera_streanming/picture/stranger_people.jpg" 
     print("[INFO] ============> Send email <================")
     from_email_addr = "sendersmarthome@gmail.com"
     from_email_password = "xxke ueoq onjo uthl"
@@ -383,21 +478,11 @@ def deleteVideo(video_name):
         return False
 
 def statApplications():
-    app.run(host='0.0.0.0', port =5000, debug=False)
+    app.run(host='0.0.0.0', port =5000, debug=False, threaded=True)
 
 if __name__ == '__main__':
     read_config()
     # face_detect(start_time,end_time)
-    # statApplications()
-    # app.run(host='0.0.0.0', port =5000, debug=False, threaded=True)
-    # appProcess = multiprocessing.Process(target=statApplications)
-    # appProcess.start()
-
-    # faceProcess = multiprocessing.Process(target=face_detect)
-    # faceProcess.start()
-
-    # appProcess.join()
-    # faceProcess.join()
     appThread = threading.Thread(target=statApplications)
     faceThread = threading.Thread(target=face_detect)
 

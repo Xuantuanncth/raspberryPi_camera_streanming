@@ -3,6 +3,48 @@ const pic_num = 0;
 window.onload = function loadData() {
     console.log("[loadData]");
     getListVideo(true);
+    getFreeSpace();
+    callStopStream();
+}
+
+function getFreeSpace(){
+    const url = "/getFreeDisk";
+    fetch(url).then((response) => {
+        response.json().then((data) => {
+            if(data.error){
+                console.log("Data error")
+            } else {
+                updateDiskFree(data);
+            }
+        })
+    })
+}
+
+function updateDiskFree(data){
+    console.log("Update disk free");
+    let progress = document.getElementById("free_space");
+    let disk_space = document.getElementById("text_space");
+    let total = data.data.total_space_gb.toFixed(2);
+    let used = data.data.used_space_gb.toFixed(2);
+    let percent = (used/total)*100;
+    progress.style.width = percent+"%";
+    disk_space.innerHTML = "Total: "+total+"GB, Used: "+used+ "GB";
+
+}
+
+function callStopStream(){
+    const url = "/stopStreaming";
+    let _video_display = document.getElementById('video_display');
+    _video_display.src=""
+    fetch(url).then((response) => {
+        response.json().then((data) => {
+            if (data.error) {
+                console.log("Data error: ", data.error);
+            } else {
+                console.log(data);
+            }
+        })
+    })
 }
 
 function getListVideo(firstCall){
@@ -96,15 +138,17 @@ function settingTime(){
 function takePicture (){
     let _takePicture = document.getElementById('take_picture');
     let _video_display = document.getElementById('video_display');
-    _takePicture.innerHTML = 'Take Picture ('+pic_num+')';
-    _video_display.src = "./video_feed"
+    _takePicture.innerHTML = 'Take Picture';
+    _video_display.src = "./video_feed";
     let url = "/takePicture";
     fetch(url).then((response) => {
         response.json().then((data) => {
             if (data.error) {
                 console.log("Data error: ", data.error);
+                _takePicture.innerHTML = 'Take Picture (Error)';
             } else {
                 console.log(data);
+                _takePicture.innerHTML = 'Take Picture (OK)';
             }
         })
     })
@@ -141,12 +185,11 @@ function settingOwner() {
 }
 
 function trainModel() {
-    let _video_display = document.getElementById('video_display');
     let _train_model = document.getElementById('train_model');
     let _takePicture = document.getElementById('take_picture');
     _takePicture.innerHTML = 'Take picture';
-    _video_display.src = ""
-    _train_model.innerHTML = "Waiting..."
+    _train_model.innerHTML = "Waiting...";
+    callStopStream();
     let url = "/trainModel";
     fetch(url).then((response) => {
         response.json().then((data) => {

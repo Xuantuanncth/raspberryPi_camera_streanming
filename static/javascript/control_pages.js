@@ -1,8 +1,14 @@
 const linkVideo = "/display_video?video_name="
+// const linkVideo = "/stream_video_1?video_name="
 const linkStream = "http://localhost:8000"
 
 window.onload = function loadData() {
     console.log("[loadData]");
+    callStopStream();
+    loadListVideo();
+}
+
+function loadListVideo(){
     const url = "/listVideo";
     fetch(url).then((response) => {
         response.json().then((data) => {
@@ -10,6 +16,19 @@ window.onload = function loadData() {
                 console.log("Data error: ", data.error);
             } else {
                 createListVideo(data);
+            }
+        })
+    })
+}
+
+function callStopStream(){
+    const url = "/stopStreaming";
+    fetch(url).then((response) => {
+        response.json().then((data) => {
+            if (data.error) {
+                console.log("Data error: ", data.error);
+            } else {
+                console.log(data);
             }
         })
     })
@@ -38,6 +57,8 @@ function createTagVideo(data){
     }
     return li;
 }
+
+
 
 
 

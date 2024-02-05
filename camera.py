@@ -102,7 +102,6 @@ class VideoCamera(object):
     
     def clear_flag_mail(self):
         self.mail_counter = 0
-        
     # Detect faces
     def face_detect(self, start_time, end_time):
         frame = self.flip_if_needed(self.vs.read())

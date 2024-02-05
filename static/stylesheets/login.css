@@ -10,6 +10,16 @@
   background-image: url("../images/background.png");
   background-size: cover;
 }
+.text-warning {
+  text-align: center;
+  margin-left: 50px;
+  position: absolute;
+  top: 160px;
+  color: red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .login-form {
   background: #f8f8f8;
   border-radius: 8px;
@@ -79,6 +89,21 @@
   align-items: center;
   justify-content: center;
 }
+
+.error {
+  color: red;
+  text-align: center;
+  font: 400 12px "Poppins", sans-serif;
+  position: absolute;
+  left: 44px;
+  top: 205px;
+  width: 270px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .login {
   color: #000000;
   text-align: center;

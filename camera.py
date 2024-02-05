@@ -1,5 +1,10 @@
+PICamera = False
+
 import cv2 as cv
-from imutils.video.pivideostream import PiVideoStream
+if PICamera:
+    from imutils.video.pivideostream import PiVideoStream
+else:
+    from imutils.video.videostream import VideoStream
 import imutils
 from imutils import paths
 import face_recognition
@@ -14,10 +19,13 @@ encodingsP = "encodings.pickle"
 print("[INFO] loading encodings + face detector...") 
 data_model = pickle.loads(open(encodingsP, "rb").read()) 
 
+
 class VideoCamera(object):
     def __init__(self, flip = False, file_type  = ".jpg", photo_string= "stream_photo", video_type=".avi"):
-        # self.vs = PiVideoStream(resolution=(1920, 1080), framerate=30).start()
-        self.vs = PiVideoStream().start()
+        if PICamera:
+            self.vs = PiVideoStream().start()
+        else:
+            self.vs = VideoStream().start()
         self.flip = flip # Flip frame vertically
         self.file_type = file_type # image type i.e. .jpg
         self.video_type = video_type
@@ -25,6 +33,7 @@ class VideoCamera(object):
         self.mail_counter = 0
         self.isSendEmail = False
         self.out = None
+        self.is_firstSendMail = 0 #Define check if is first send mail
         time.sleep(2.0)
 
     def __del__(self):
@@ -69,7 +78,10 @@ class VideoCamera(object):
         video_path = f"./video/{today_date}{self.video_type}"
         print("[INFO] Video path: ", video_path)
         fourcc = cv.VideoWriter_fourcc(*'XVID')  # You can change the codec as needed
-        resolution = self.vs.camera.resolution
+        if PICamera:
+            resolution = self.vs.resolution
+        else:
+            resolution=(320, 240)
         self.out = cv.VideoWriter(video_path, fourcc, 20.0, resolution)  # Adjust parameters accordingly
     
     def stop_recording(self):
@@ -79,7 +91,10 @@ class VideoCamera(object):
             self.out = None
 
     def check_sendMail(self):
-        if self.mail_counter > 20:
+        if self.is_firstSendMail == 1:
+            self.is_firstSendMail = 2
+            return True
+        if self.mail_counter > 5:
             print("[INFO] Check send mail: Send")
             return True
         else:
@@ -114,8 +129,13 @@ class VideoCamera(object):
             matches = face_recognition.compare_faces(data_model["encodings"],encoding)
             name = "Unknown" #if face is not recognized, then print Unknown
             if True in matches:
-                print("Có nguoi quen")
+                print("Co nguoi quen")
+                self.is_firstSendMail = 0
             else:
                 self.take_picture("")
-                self.mail_counter += 1
                 print("Nguoi la xuat hien")
+                if self.is_firstSendMail == 0:
+                    self.is_firstSendMail = 1
+                else:
+                    self.mail_counter += 1
+

@@ -7,7 +7,6 @@ import cv2
 import os
 import json
 import re
-# import multiprocessing
 import threading
 import smtplib
 from email.message import EmailMessage
@@ -37,26 +36,32 @@ admin_name = ""
 admin_pass = ""
 MAX_ATTEMPTS = 3
 is_train_model = False
-is_streaming = True
+is_NoStreaming = True
 is_updateConfig = False
 
 #============================= App routes =============================#
 @app.route('/')
 def index():
-    return render_template('index.html') 
+    attempts = session.get('failed_attempts', 0)
+    if attempts >= MAX_ATTEMPTS:
+        return render_template('index.html', error='Too many failed login attempts, please try after 5m',disable='true')
+    elif attempts > 0 :
+        return render_template('index.html', error=f'Invalid username or password, login fail {attempts}')
+    else:
+        return render_template('index.html')
 
 @app.route('/video_feed')
 def video_feed():
-    global is_streaming
-    is_streaming = False
+    global is_NoStreaming
+    is_NoStreaming = False
     return Response(gen(pi_camera),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # Call stop_streaming to make sure that streaming stop
 @app.route('/stopStreaming')
 def stop_streaming():
-    global is_streaming
-    is_streaming = True
+    global is_NoStreaming
+    is_NoStreaming = True
     return jsonify({'status':'OK'}),200
 
 # Take a photo when pressing camera button
@@ -142,10 +147,12 @@ def settingTimes():
 
 @app.route('/settingOwner', methods=['GET'])
 def settingOwner():
+    global is_updateConfig
     print('[INFO] App Setting owner')
     _user_name = request.args.get('name')
     _email = request.args.get('email')
     if(update_config_owner(_user_name,_email)):
+        is_updateConfig = True
         return 'OK',200
     else:
         return 'Owner exists',404
@@ -367,6 +374,7 @@ def getListVideo():
     return _list_video_path
 
 def trainModel():
+    global is_NoStreaming
     # our images are located in the dataset folder
     print("[INFO] ============> Starting train model <================")
     imagePaths = list(paths.list_images("dataset"))
@@ -374,7 +382,8 @@ def trainModel():
     # initialize the list of known encodings and known names
     knownEncodings = []
     knownNames = []
-
+    
+    is_NoStreaming = False
     # loop over the image paths
     for (i, imagePath) in enumerate(imagePaths):
         # extract the person name from the image path
@@ -408,10 +417,11 @@ def trainModel():
     f.write(pickle.dumps(data))
     f.close()
     print("[INFO] ============> Finish train model <================")
+    is_NoStreaming = True
 
 def sendMail(): 
     # Set the sender email and password and recipient email
-    strange_images = "/home/pi/camera_detect/raspberryPi_camera_streanming/picture/stranger_people.jpg" 
+    strange_images = image_path+"/stranger_people.jpg" 
     print("[INFO] ============> Send email <================")
     from_email_addr = "sendersmarthome@gmail.com"
     from_email_password = "xxke ueoq onjo uthl"
@@ -453,12 +463,12 @@ def sendMail():
     server.quit()
     
     print('Email sent')
-# face_detect(is_streaming,is_updateConfig,start_time,end_time)
+# face_detect(is_NoStreaming,is_updateConfig,start_time,end_time)
 def face_detect():
     print("Start face_detect")
     global is_updateConfig
     while True:
-        if is_streaming:
+        if is_NoStreaming:
             pi_camera.face_detect(start_time, end_time)
 
         if pi_camera.check_sendMail() :

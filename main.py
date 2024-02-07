@@ -73,8 +73,6 @@ def take_picture():
 
 @app.route('/streaming')
 def streaming():
-    global is_streaming
-    is_streaming = True
     print('[INFO] App streaming')
     if session.get('logged_in'):
         return render_template('streaming.html')
@@ -491,9 +489,6 @@ def deleteVideo(video_name):
 
 def statApplications():
     app.run(host='0.0.0.0', port =5000, debug=False, threaded=True)
-
-def startFaceDetection():
-    face_detect(start_time,end_time)
 
 if __name__ == '__main__':
     read_config()
